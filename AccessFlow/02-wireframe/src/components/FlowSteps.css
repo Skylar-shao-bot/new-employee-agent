@@ -1,0 +1,8 @@
+/* 流程导览：用 antd 6 原生横向 Steps，不要手动画连接线 */
+.ds-flow-steps.ant-steps {
+  width: 100%;
+}
+
+.ds-flow-steps .ant-steps-item-process .ant-steps-item-title {
+  font-weight: 600;
+}

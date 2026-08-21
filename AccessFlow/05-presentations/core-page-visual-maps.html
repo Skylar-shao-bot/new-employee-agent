@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccessFlow · 核心页视觉地图</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #eceae4;
+      --ink: #161616;
+      --muted: #6a6862;
+      --line: #cfcbc3;
+      --fill: #f6f4ef;
+      --fill-deep: #e4e1d9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #2a2a28;
+    }
+
+    .deck-viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: #2a2a28;
+    }
+
+    .deck-stage {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      transform-origin: 0 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Schibsted Grotesk", "PingFang SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    .slide { display: none; width: 1920px; height: 1080px; position: relative; }
+    .slide.is-on { display: block; }
+
+    .mast { position: absolute; left: 88px; top: 56px; }
+    .mast-kicker {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mast-title {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .mast-job {
+      margin-top: 10px;
+      max-width: 520px;
+      font-size: 16px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .nav-dots {
+      position: absolute;
+      right: 88px;
+      top: 64px;
+      display: flex;
+      gap: 10px;
+    }
+    .nav-dots button {
+      width: 10px;
+      height: 10px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--line);
+      cursor: pointer;
+    }
+    .nav-dots button.is-on { background: var(--ink); }
+
+    .foot {
+      position: absolute;
+      left: 88px;
+      bottom: 48px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .hint {
+      position: absolute;
+      right: 88px;
+      bottom: 48px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.06em;
+    }
+
+    /* Overview */
+    .path {
+      position: absolute;
+      left: 88px;
+      top: 220px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      width: 1744px;
+    }
+    .path-card {
+      border: 1.5px solid var(--ink);
+      min-height: 620px;
+      padding: 28px 28px 32px;
+      background: var(--fill);
+    }
+    .path-id {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+    .path-name {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .path-role {
+      margin-top: 8px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .path-list {
+      margin-top: 28px;
+      list-style: none;
+    }
+    .path-list li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .path-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5em;
+      width: 5px;
+      height: 5px;
+      background: var(--ink);
+      transform: rotate(45deg);
+    }
+    .path-list .lead { font-weight: 600; }
+    .path-gate {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    /* Page map */
+    .meta {
+      position: absolute;
+      left: 88px;
+      top: 188px;
+      width: 420px;
+    }
+    .meta h2 {
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 18px;
+    }
+    .meta dl { display: grid; gap: 18px; }
+    .meta dt {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .meta dd { font-size: 16px; line-height: 1.5; }
+
+    .frame {
+      position: absolute;
+      left: 560px;
+      top: 168px;
+      width: 1272px;
+      height: 780px;
+      display: grid;
+      grid-template-columns: 188px 1fr;
+      grid-template-rows: 48px 1fr;
+      border: 1.5px solid var(--ink);
+      background: var(--fill);
+    }
+    .frame-brand {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-right: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+    }
+    .frame-top {
+      grid-column: 2;
+      grid-row: 1;
+      border-bottom: 1px solid var(--ink);
+      background: var(--fill-deep);
+    }
+    .frame-side {
+      grid-column: 1;
+      grid-row: 2;
+      border-right: 1px solid var(--ink);
+      padding: 16px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .menu { list-style: none; }
+    .menu li {
+      font-size: 14px;
+      padding: 8px 8px;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+    .menu li.now {
+      color: var(--ink);
+      font-weight: 600;
+      background: var(--fill-deep);
+    }
+    .user {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px;
+    }
+
+    .canvas {
+      grid-column: 2;
+      grid-row: 2;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .block {
+      border: 1px solid var(--ink);
+      background: #fff;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+    }
+    .block.grow { flex: 1; align-items: flex-start; }
+    .block.bar {
+      min-height: 46px;
+      justify-content: flex-end;
+      background: var(--fill-deep);
+    }
+    .n {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .block b { font-weight: 600; font-size: 14px; }
+    .block span { font-size: 13px; color: var(--muted); }
+    .row { display: flex; gap: 8px; }
+    .row > .block { flex: 1; }
+    .stack {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      flex: 1;
+    }
+    .stack .block { min-height: 0; }
+    .stack.one { grid-template-columns: 1fr; }
+    .stack.quad { grid-template-columns: 1fr 1fr; }
+  </style>
+</head>
+<body>
+  <div class="deck-viewport">
+    <main class="deck-stage" id="deckStage">
+
+      <section class="slide is-on" data-slide="0">
+        <header class="mast">
+          <div class="mast-kicker">AccessFlow</div>
+          <div class="mast-title">核心页视觉地图</div>
+        </header>
+        <div class="path">
+          <article class="path-card">
+            <div class="path-id">P-02 · 1440</div>
+            <div class="path-name">方案审阅</div>
+            <div class="path-role">开什么、为什么排除</div>
+            <ul class="path-list">
+              <li class="lead">7 项建议 · 2 项排除</li>
+              <li>只审偏差</li>
+              <li>可改范围 / 有效期</li>
+              <li>未确认，零开通</li>
+            </ul>
+            <p class="path-gate">主按钮：继续确认执行</p>
+          </article>
+          <article class="path-card">
+            <div class="path-id">P-03 · 1440</div>
+            <div class="path-name">执行确认</div>
+            <div class="path-role">确认之后谁来做</div>
+            <ul class="path-list">
+              <li class="lead">Agent 执行 6 · 送审 1</li>
+              <li>排除项不出现</li>
+              <li>确认 ≠ 审批 ≠ 开通</li>
+              <li>点确认才开始处理</li>
+            </ul>
+            <p class="path-gate">主按钮：确认方案并开始处理</p>
+          </article>
+          <article class="path-card">
+            <div class="path-id">P-04 · 1440</div>
+            <div class="path-name">执行进度</div>
+            <div class="path-role">开始执行，看谁在跑</div>
+            <ul class="path-list">
+              <li class="lead">七项状态实时推进</li>
+              <li>依赖阻塞先等账号</li>
+              <li>失败转人工</li>
+              <li>未知只查询</li>
+            </ul>
+            <p class="path-gate">确认后进入 · 不可再改方案</p>
+          </article>
+          <article class="path-card">
+            <div class="path-id">P-05 · 1024 / 1440</div>
+            <div class="path-name">执行完成</div>
+            <div class="path-role">部分完成，判断下一步</div>
+            <ul class="path-list">
+              <li class="lead">4 成功 · 1 失败 · 1 待审批 · 1 未知</li>
+              <li>许可证转工具管理员</li>
+              <li>数据权限等审批</li>
+              <li>文件库先查询</li>
+            </ul>
+            <p class="path-gate">整单不得标成全部完成</p>
+          </article>
+        </div>
+        <p class="foot">同一套 SideLayout · 确认前可返回 · 确认后不可改方案</p>
+        <p class="hint">← → 翻页</p>
+      </section>
+
+      <section class="slide" data-slide="1">
+        <header class="mast">
+          <div class="mast-kicker">P-02 · 开通方案审阅</div>
+          <div class="mast-title">视觉地图</div>
+          <p class="mast-job">用人经理只审偏差。现在不会创建账号。</p>
+        </header>
+        <aside class="meta">
+          <h2>侧栏仍在「新建开通」</h2>
+          <dl>
+            <div>
+              <dt>看什么</dt>
+              <dd>7 项建议、2 项排除、1 项需要审批。标准项不要求逐条发明新权限。</dd>
+            </div>
+            <div>
+              <dt>可改</dt>
+              <dd>范围、有效期、取消勾选。改完重校验。</dd>
+            </div>
+            <div>
+              <dt>禁止</dt>
+              <dd>把排除项加回执行；未确认就开始开通；突破硬规则。</dd>
+            </div>
+          </dl>
+        </aside>
+        <div class="frame" aria-label="P-02 布局">
+          <div class="frame-brand">ACCESS FLOW</div>
+          <div class="frame-top"></div>
+          <div class="frame-side">
+            <ul class="menu">
+              <li class="now">新建开通</li>
+              <li>正在执行</li>
+              <li>开通记录</li>
+              <li>设置</li>
+            </ul>
+            <div class="user">李经理</div>
+          </div>
+          <div class="canvas">
+            <div class="block"><i class="n">1</i><div><b>流程 Steps</b> <span>当前第 2 步 · 开通方案审阅</span></div></div>
+            <div class="block"><i class="n">2</i><div><b>标题</b> <span>开通方案审阅 · 现在不会创建账号</span></div></div>
+            <div class="block"><i class="n">3</i><div><b>说明条</b> <span>请审阅后继续确认执行</span></div></div>
+            <div class="block"><i class="n">4</i><div><b>员工摘要</b> <span>陈晨 · 软件产品设计师 · Atlas</span></div></div>
+            <div class="row">
+              <div class="block"><i class="n">5</i><div><b>建议 7</b></div></div>
+              <div class="block"><div><b>可直接执行 6</b></div></div>
+              <div class="block"><div><b>需审批 1</b></div></div>
+              <div class="block"><div><b>排除 2</b></div></div>
+            </div>
+            <div class="stack">
+              <div class="block grow"><i class="n">6</i><div><b>可直接执行</b><br><span>公司账号、邮件、知识库、看板、设计工具、文件库</span></div></div>
+              <div class="block grow"><i class="n">7</i><div><b>需要审批</b><br><span>产品数据看板 · 数据负责人</span></div></div>
+              <div class="block grow" style="grid-column:1 / -1"><i class="n">8</i><div><b>不应开通</b><br><span>客户数据导出 · 生产系统管理 · 只读，永不进队列</span></div></div>
+            </div>
+            <div class="block bar"><i class="n">9</i><div><b>吸底</b> <span>返回 · 继续确认执行</span></div></div>
+          </div>
+        </div>
+        <p class="foot">分组轴：可直接执行 / 需要审批 / 不应开通</p>
+      </section>
+
+      <section class="slide" data-slide="2">
+        <header class="mast">
+          <div class="mast-kicker">P-03 · 权限与执行确认</div>
+          <div class="mast-title">视觉地图</div>
+          <p class="mast-job">核对确认后谁来做。点确认才会开始处理。</p>
+        </header>
+        <aside class="meta">
+          <h2>仍在「新建开通」</h2>
+          <dl>
+            <div>
+              <dt>看什么</dt>
+              <dd>将处理 7 = Agent 执行 6 + 送审 1。排除 2 项整组不出现。</dd>
+            </div>
+            <div>
+              <dt>可改</dt>
+              <dd>勾选是否进入队列，默认全选。改范围必须回 P-02。</dd>
+            </div>
+            <div>
+              <dt>禁止</dt>
+              <dd>把确认写成审批或开通。本页本身仍未开通。</dd>
+            </div>
+          </dl>
+        </aside>
+        <div class="frame" aria-label="P-03 布局">
+          <div class="frame-brand">ACCESS FLOW</div>
+          <div class="frame-top"></div>
+          <div class="frame-side">
+            <ul class="menu">
+              <li class="now">新建开通</li>
+              <li>正在执行</li>
+              <li>开通记录</li>
+              <li>设置</li>
+            </ul>
+            <div class="user">李经理</div>
+          </div>
+          <div class="canvas">
+            <div class="block"><i class="n">1</i><div><b>流程 Steps</b> <span>当前第 3 步 · 权限与执行确认</span></div></div>
+            <div class="block"><i class="n">2</i><div><b>标题 + 返回修改方案</b> <span>点确认才会开始开通</span></div></div>
+            <div class="block"><i class="n">3</i><div><b>说明条</b> <span>确认 ≠ 审批。送审项批准前不开通</span></div></div>
+            <div class="block"><i class="n">4</i><div><b>员工摘要</b> <span>与 P-02 同一套字段，只读</span></div></div>
+            <div class="row">
+              <div class="block"><i class="n">5</i><div><b>Agent 将执行 6</b></div></div>
+              <div class="block"><div><b>将送交审批 1</b></div></div>
+            </div>
+            <div class="stack">
+              <div class="block grow"><i class="n">6</i><div><b>Agent 将为你执行</b><br><span>含勾选。设计工具先查许可证，不足再转人工</span></div></div>
+              <div class="block grow"><i class="n">7</i><div><b>将送交人工审批</b><br><span>产品数据看板 · 数据负责人 · 批准前不开通</span></div></div>
+            </div>
+            <div class="block bar"><i class="n">8</i><div><b>吸底</b> <span>返回修改方案 · 确认方案并开始处理</span></div></div>
+          </div>
+        </div>
+        <p class="foot">分组轴换成执行主体：Agent / 人工执行 / 送审。人工组默认不出现</p>
+      </section>
+
+      <section class="slide" data-slide="3">
+        <header class="mast">
+          <div class="mast-kicker">P-04 · 跨系统执行进度</div>
+          <div class="mast-title">视觉地图</div>
+          <p class="mast-job">开始执行。看整单和七项现在怎样。</p>
+        </header>
+        <aside class="meta">
+          <h2>侧栏切到「正在执行」</h2>
+          <dl>
+            <div>
+              <dt>看什么</dt>
+              <dd>谁在跑、谁被阻塞、谁在等审批、失败要找谁。</dd>
+            </div>
+            <div>
+              <dt>可做</dt>
+              <dd>刷新、打开详情、失败转人工、未知只查询。可以离开此页。</dd>
+            </div>
+            <div>
+              <dt>禁止</dt>
+              <dd>成功项重试。未知项再开一次。跳过公司账号依赖。</dd>
+            </div>
+          </dl>
+        </aside>
+        <div class="frame" aria-label="P-04 布局">
+          <div class="frame-brand">ACCESS FLOW</div>
+          <div class="frame-top"></div>
+          <div class="frame-side">
+            <ul class="menu">
+              <li>新建开通</li>
+              <li class="now">正在执行</li>
+              <li>开通记录</li>
+              <li>设置</li>
+            </ul>
+            <div class="user">李经理</div>
+          </div>
+          <div class="canvas">
+            <div class="block"><i class="n">1</i><div><b>流程 Steps</b> <span>第 4 步标题为「执行进度」</span></div></div>
+            <div class="block"><i class="n">2</i><div><b>进度环 + 申请单号</b> <span>刷新 · 稍后处理</span></div></div>
+            <div class="block"><i class="n">3</i><div><b>说明条</b> <span>Agent 继续处理，需要你时再通知</span></div></div>
+            <div class="row">
+              <div class="block"><i class="n">4</i><div><b>已完成</b></div></div>
+              <div class="block"><div><b>执行中</b></div></div>
+              <div class="block"><div><b>待审批</b></div></div>
+              <div class="block"><div><b>被阻塞</b></div></div>
+              <div class="block"><div><b>需要处理</b></div></div>
+              <div class="block"><div><b>尚未开始</b></div></div>
+            </div>
+            <div class="stack">
+              <div class="block grow"><i class="n">5</i><div><b>需要处理 / 被阻塞</b><br><span>异常组置顶。有项才出现</span></div></div>
+              <div class="block grow"><i class="n">6</i><div><b>当前执行</b><br><span>正在跑的项 + 队列、待审批、尚未开始</span></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="foot">详情抽屉从右侧滑出，不是独立页。凑齐 F01 后自动进入结果</p>
+      </section>
+
+      <section class="slide" data-slide="4">
+        <header class="mast">
+          <div class="mast-kicker">P-05 · 执行结果 F01</div>
+          <div class="mast-title">视觉地图</div>
+          <p class="mast-job">执行完成，但是部分完成。判断下一步。</p>
+        </header>
+        <aside class="meta">
+          <h2>侧栏切到「开通记录」</h2>
+          <dl>
+            <div>
+              <dt>看什么</dt>
+              <dd>4 成功、1 失败、1 待审批、1 未知。失败找工具管理员，审批等数据负责人，未知先查询。</dd>
+            </div>
+            <div>
+              <dt>可做</dt>
+              <dd>查看回执、审批详情、查询结果、人工核验、完结权限开通。</dd>
+            </div>
+            <div>
+              <dt>禁止</dt>
+              <dd>把整单标成全部完成。成功项再开。未知项直接重试。</dd>
+            </div>
+          </dl>
+        </aside>
+        <div class="frame" aria-label="P-05 布局">
+          <div class="frame-brand">ACCESS FLOW</div>
+          <div class="frame-top"></div>
+          <div class="frame-side">
+            <ul class="menu">
+              <li>新建开通</li>
+              <li>正在执行</li>
+              <li class="now">开通记录</li>
+              <li>设置</li>
+            </ul>
+            <div class="user">李经理</div>
+          </div>
+          <div class="canvas">
+            <div class="block"><i class="n">1</i><div><b>流程 Steps</b> <span>第 4 步标题切为「执行结果」</span></div></div>
+            <div class="block"><i class="n">2</i><div><b>进度环 + 部分完成</b> <span>查看结果摘要</span></div></div>
+            <div class="block"><i class="n">3</i><div><b>警告条</b> <span>存在待人工处理或结果未知的项</span></div></div>
+            <div class="row">
+              <div class="block"><i class="n">4</i><div><b>成功 4</b></div></div>
+              <div class="block"><div><b>失败 1</b></div></div>
+              <div class="block"><div><b>待审批 1</b></div></div>
+              <div class="block"><div><b>未知 1</b></div></div>
+            </div>
+            <div class="stack quad">
+              <div class="block grow"><i class="n">5</i><div><b>成功 2×2</b><br><span>账号 / 邮件 / 知识库 / 看板 · 锁定</span></div></div>
+              <div class="block grow"><i class="n">6</i><div><b>失败全宽</b><br><span>设计工具 · 无许可证 · 转工具管理员</span></div></div>
+              <div class="block grow"><i class="n">7</i><div><b>待审批全宽</b><br><span>产品数据看板 · 批准前不开通</span></div></div>
+              <div class="block grow"><i class="n">8</i><div><b>结果未知全宽</b><br><span>文件库超时 · 只查询原请求</span></div></div>
+            </div>
+            <div class="block bar"><i class="n">9</i><div><b>吸底</b> <span>保存 · 返回首页 · 完结权限开通</span></div></div>
+          </div>
+        </div>
+        <p class="foot">1024 宽主操作也不能消失。完结 ≠ 全部成功</p>
+      </section>
+
+      <div class="nav-dots" id="dots"></div>
+    </main>
+  </div>
+  <script>
+    (function () {
+      const stage = document.getElementById("deckStage");
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const dots = document.getElementById("dots");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("aria-label", "第 " + (i + 1) + " 页");
+        b.addEventListener("click", () => go(i));
+        dots.appendChild(b);
+      });
+
+      function go(next) {
+        index = (next + slides.length) % slides.length;
+        slides.forEach((s, i) => s.classList.toggle("is-on", i === index));
+        Array.from(dots.children).forEach((d, i) => d.classList.toggle("is-on", i === index));
+      }
+
+      function scale() {
+        const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        const x = (window.innerWidth - 1920 * factor) / 2;
+        const y = (window.innerHeight - 1080 * factor) / 2;
+        stage.style.transform = "translate(" + x + "px, " + y + "px) scale(" + factor + ")";
+      }
+
+      window.addEventListener("resize", scale);
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(index + 1); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); go(index - 1); }
+      });
+      scale();
+      go(0);
+    })();
+  </script>
+</body>
+</html>

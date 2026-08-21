@@ -1,0 +1,158 @@
+.p01-shell {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  min-height: calc(100vh - var(--nav-header-height) - var(--nav-space-6) * 2);
+  justify-content: center;
+}
+
+.p01-agent-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 88px;
+}
+
+.p01-agent {
+  display: block;
+  height: 88px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+}
+
+video.p01-agent {
+  pointer-events: none;
+}
+
+.p01-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-space-4);
+}
+
+.p01-section-title.ant-typography {
+  margin: 0;
+  font-size: var(--font-size-heading-5);
+  line-height: calc(var(--font-size-heading-5) + 8px);
+  font-weight: var(--font-weight-secondary);
+  color: var(--nav-color-text-active);
+}
+
+.p01-prompt-form .ant-form-item {
+  margin-bottom: 0;
+}
+
+.p01-prompt-card .ant-input-outlined,
+.p01-prompt-card .ant-input-textarea-affix-wrapper,
+.p01-prompt-card textarea.ant-input {
+  background: var(--color-bg-container);
+  border-radius: var(--border-radius);
+}
+
+.p01-prompt-footer {
+  margin-top: var(--nav-space-4);
+  padding-top: var(--nav-space-4);
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.p01-analyze-steps {
+  margin-top: var(--nav-space-4);
+}
+
+.p01-followup {
+  margin-top: var(--nav-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-space-3);
+}
+
+.p01-task-card.ant-card.ds-page-card {
+  cursor: pointer;
+}
+
+.p01-task-card.ant-card.ds-page-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.p01-task-main {
+  min-width: 0;
+  gap: var(--nav-space-3);
+}
+
+.p01-task-avatar.ant-avatar {
+  flex: 0 0 40px;
+  background: var(--color-primary);
+}
+
+.p01-task-body {
+  min-width: 0;
+  gap: var(--nav-space-2);
+}
+
+.p01-task-title-row {
+  min-width: 0;
+  gap: var(--nav-space-4);
+}
+
+.p01-task-title {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.p01-task-name {
+  font-weight: var(--font-weight-secondary);
+  color: var(--color-text);
+}
+
+.p01-task-meta {
+  font-weight: var(--font-weight);
+  color: var(--color-text-secondary);
+}
+
+.p01-task-metrics {
+  gap: var(--nav-space-3);
+  min-width: 0;
+}
+
+.p01-task-metrics .ant-progress {
+  flex: 1 1 120px;
+  margin-block: 0;
+  min-width: 96px;
+  max-width: 240px;
+}
+
+.p01-task-count {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.p01-task-tags {
+  min-width: 0;
+}
+
+.p01-task-tags .ant-tag {
+  margin-inline-end: 0;
+}
+
+.p01-task-action.ant-btn-link {
+  flex: 0 0 auto;
+  padding-inline: 0;
+  height: auto;
+}
+
+@media (max-width: 760px) {
+  .p01-agent-wrap {
+    width: 96px;
+    height: 72px;
+  }
+
+  .p01-agent {
+    height: 72px;
+    max-width: 96px;
+  }
+}

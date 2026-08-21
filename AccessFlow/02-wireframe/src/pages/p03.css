@@ -1,0 +1,73 @@
+.p03-page .ds-page-inline-alert .ant-alert-message {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.p03-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--margin-sm);
+  align-items: stretch;
+}
+
+.p03-stat-grid.is-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.p03-lane-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.p03-lane-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.p03-lane-icon.is-agent {
+  color: var(--color-success);
+}
+
+.p03-lane-icon.is-audit {
+  color: var(--color-warning);
+}
+
+.p03-lane-icon.is-manual {
+  color: var(--color-primary);
+}
+
+@media (max-width: 1280px) {
+  .p03-stat-grid,
+  .p03-stat-grid.is-three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 596px) {
+  .p03-stat-grid,
+  .p03-stat-grid.is-three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.p03-page .ds-table-card-padded .ant-table-wrapper {
+  width: 100%;
+}
+
+.p03-page .ds-table-card-padded .ant-table {
+  min-width: 0;
+}
+
+.p03-page .ds-table-card-padded .ant-table-cell {
+  vertical-align: middle;
+}
+
+.p03-page .ds-table-card-padded .ant-table-cell .ant-typography,
+.p03-page .ds-table-card-padded .ant-table-cell .ant-space {
+  max-width: 100%;
+}

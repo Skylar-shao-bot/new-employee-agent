@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccessFlow · 页面架构</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #eceae4;
+      --ink: #161616;
+      --muted: #6a6862;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #2a2a28;
+    }
+
+    .deck-viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: #2a2a28;
+    }
+
+    .deck-stage {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      transform-origin: 0 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Schibsted Grotesk", "PingFang SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    .mast {
+      position: absolute;
+      left: 88px;
+      top: 56px;
+    }
+
+    .mast-kicker {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .mast-title {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .path-layer {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+    }
+
+    .path-solid {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.5;
+    }
+
+    .path-turn {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.5;
+      stroke-dasharray: 3 7;
+    }
+
+    .station {
+      position: absolute;
+      width: 220px;
+      margin-left: -110px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .node {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .drop {
+      width: 0;
+      height: 42px;
+      border-left: 1.5px dotted var(--ink);
+    }
+
+    .items {
+      list-style: none;
+      width: 200px;
+      margin-left: 110px;
+      padding-top: 2px;
+    }
+
+    .items li {
+      position: relative;
+      padding-left: 16px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      line-height: 1.35;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .items li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.48em;
+      width: 5px;
+      height: 5px;
+      background: var(--ink);
+      transform: rotate(45deg);
+    }
+
+    .items .lead {
+      font-weight: 600;
+    }
+
+    .items .emph {
+      font-weight: 600;
+      font-style: italic;
+    }
+
+    .items .group {
+      margin-top: 4px;
+    }
+
+    .bracket {
+      position: relative;
+      margin-left: 16px;
+      padding-left: 14px;
+      border-left: 1px solid var(--ink);
+    }
+
+    .bracket-label {
+      position: absolute;
+      left: -78px;
+      top: 12px;
+      width: 70px;
+      text-align: right;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .turn-note {
+      position: absolute;
+      right: 92px;
+      top: 478px;
+      width: 140px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .foot {
+      position: absolute;
+      left: 88px;
+      bottom: 48px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.08em;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .path-solid, .path-turn {
+        stroke-dasharray: 8 0;
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-viewport">
+    <main class="deck-stage" id="deckStage">
+      <header class="mast">
+        <div class="mast-kicker">AccessFlow</div>
+        <div class="mast-title">页面架构</div>
+      </header>
+
+      <svg class="path-layer" viewBox="0 0 1920 1080" aria-hidden="true">
+        <!-- 00–03 -->
+        <path class="path-solid" d="M240 292 H1380" />
+        <!-- 03 折返到 04：确认后才执行 -->
+        <path class="path-turn" d="M1380 292 A188 188 0 0 1 1380 668" />
+        <!-- 04–06 -->
+        <path class="path-solid" d="M1380 668 H620" />
+      </svg>
+
+      <p class="turn-note">确认后<br>才执行</p>
+
+      <!-- 上排 00–03，从左到右 -->
+      <section class="station" style="left:240px; top:269px">
+        <div class="node">00</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">打开工作台</li>
+          <li>新建开通</li>
+          <li>正在执行</li>
+          <li>开通记录</li>
+        </ul>
+      </section>
+
+      <section class="station" style="left:620px; top:269px">
+        <div class="node">01</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">需求输入</li>
+          <li>自然语言</li>
+          <li>Agent 核对</li>
+          <li>生成方案</li>
+        </ul>
+      </section>
+
+      <section class="station" style="left:1000px; top:269px">
+        <div class="node">02</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">方案审阅</li>
+          <li>7 项建议</li>
+          <li>2 项排除</li>
+          <li>只审偏差</li>
+        </ul>
+      </section>
+
+      <section class="station" style="left:1380px; top:269px">
+        <div class="node">03</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">执行确认</li>
+          <li>分组授权</li>
+          <li class="emph">确认并开始处理</li>
+        </ul>
+      </section>
+
+      <!-- 下排 04–06，从右到左 -->
+      <section class="station" style="left:1380px; top:645px">
+        <div class="node">04</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">执行进度</li>
+          <li>七项状态</li>
+          <li>详情抽屉</li>
+          <li>依赖阻塞</li>
+        </ul>
+      </section>
+
+      <section class="station" style="left:1000px; top:645px">
+        <div class="node">05</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">部分完成</li>
+          <li>成功锁定</li>
+          <li>待审批 / 转人工</li>
+          <li>未知只查询</li>
+        </ul>
+      </section>
+
+      <section class="station" style="left:620px; top:645px">
+        <div class="node">06</div>
+        <div class="drop"></div>
+        <ul class="items">
+          <li class="lead">最终结果</li>
+          <li>整单收口</li>
+          <li>未完成事项</li>
+        </ul>
+      </section>
+
+      <p class="foot">确认前可返回 · 确认后不可改方案 · 设置本期无独立页</p>
+    </main>
+  </div>
+  <script>
+    (function scaleStage() {
+      const stage = document.getElementById("deckStage");
+      const scale = () => {
+        const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        const x = (window.innerWidth - 1920 * factor) / 2;
+        const y = (window.innerHeight - 1080 * factor) / 2;
+        stage.style.transform = "translate(" + x + "px, " + y + "px) scale(" + factor + ")";
+      };
+      scale();
+      window.addEventListener("resize", scale);
+    })();
+  </script>
+</body>
+</html>

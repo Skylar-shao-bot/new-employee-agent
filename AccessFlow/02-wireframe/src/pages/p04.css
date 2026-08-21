@@ -1,0 +1,461 @@
+.p04-page {
+  padding-bottom: 24px;
+}
+
+/* 执行进度 / 执行结果：页头标题与进度环成组，表达「这一阶段完成到哪」 */
+.ds-exec-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ds-exec-heading-ring {
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.ds-exec-heading-ring.ant-progress .ant-progress-inner {
+  /* 与右侧两行标题+元信息视觉中线对齐 */
+  display: block;
+}
+
+.ds-exec-heading-ring.ant-progress .ant-progress-text {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ds-exec-heading-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 64px;
+}
+
+.ds-exec-heading-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.ds-exec-heading-copy > .ant-typography {
+  line-height: 22px;
+}
+
+/* 六态指标：去掉员工卡后通栏排布，宽屏 6 列 */
+.p04-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--margin-sm);
+  align-items: stretch;
+}
+
+.p04-card-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-space-2);
+  min-width: 0;
+}
+
+.p04-agent-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 48px;
+  flex: 0 0 auto;
+}
+
+.p04-agent {
+  display: block;
+  height: 48px;
+  width: auto;
+  max-width: 56px;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+}
+
+video.p04-agent {
+  pointer-events: none;
+}
+
+.p04-group + .p04-group,
+.p04-item-stack + .p04-group {
+  margin-top: var(--nav-space-4);
+}
+
+.p04-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--nav-space-2);
+  min-width: 0;
+  margin-bottom: var(--nav-space-2);
+}
+
+.p04-group-label.ant-typography {
+  font-size: var(--font-size-xs);
+  line-height: calc(var(--font-size-xs) + 8px);
+  font-weight: var(--font-weight-secondary);
+  color: var(--color-text-secondary);
+}
+
+.p04-group-icon {
+  display: inline-flex;
+  font-size: 16px;
+}
+
+.p04-group-icon.is-primary {
+  color: var(--color-primary);
+}
+
+.p04-group-icon.is-warning {
+  color: var(--color-warning);
+}
+
+.p04-group-icon.is-error {
+  color: var(--color-error);
+}
+
+.p04-group-icon.is-success {
+  color: var(--color-success);
+}
+
+.p04-group-icon.is-default {
+  color: var(--color-text-tertiary);
+}
+
+.p04-group-icon.is-purple {
+  /* antd purple-6，Skill 允许的辅助语义色 */
+  color: #722ed1;
+}
+
+.p02-stat-icon.is-default {
+  color: var(--color-text-tertiary);
+  background: var(--color-fill-tertiary);
+}
+
+.p02-stat-icon.is-purple {
+  /* antd purple-6 / purple-1 */
+  color: #722ed1;
+  background: #f9f0ff;
+}
+
+.p04-item-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* P-04：列表行用分割线，不再一框一卡 */
+.p04-page .p04-item-stack {
+  gap: 0;
+}
+
+.p04-page .ds-page-card .ds-card-title-row {
+  margin-bottom: var(--padding);
+}
+
+.p04-item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius);
+  background: var(--color-bg-container);
+  text-align: left;
+  cursor: pointer;
+}
+
+.p04-page .p04-item {
+  column-gap: 14px;
+  padding: 14px 4px;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border-secondary);
+  background: transparent;
+}
+
+.p04-page .p04-item:last-child {
+  border-bottom: 0;
+}
+
+.p04-item.has-meta {
+  grid-template-columns: 16px minmax(0, 1fr) auto auto;
+}
+
+.p04-item:hover {
+  border-color: var(--color-primary-border);
+}
+
+.p04-page .p04-item:hover {
+  background: var(--color-fill-quaternary);
+  border-bottom-color: var(--color-border-secondary);
+}
+
+.p04-page .p04-item:last-child:hover {
+  border-bottom-color: transparent;
+}
+
+.p04-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.p04-item.is-running {
+  align-items: start;
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary-border);
+}
+
+/* 执行中：浅底区分，不做成嵌套卡片 */
+.p04-page .p04-item.is-running {
+  padding: 14px 12px;
+  margin: 0 -8px;
+  border: 0;
+  border-radius: var(--border-radius-lg);
+  background: var(--color-primary-bg);
+}
+
+.p04-page .p04-item.is-running:hover {
+  background: var(--color-primary-bg);
+  border-bottom-color: transparent;
+}
+
+.p04-item-icon {
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-text-tertiary);
+}
+
+.p04-item.is-running .p04-item-icon {
+  margin-top: 1px;
+}
+
+/* 状态色（P-05 等复用）；P-04 行图标改用系统语义色 */
+.p04-item-icon.is-running {
+  color: var(--color-primary);
+}
+
+.p04-item-icon.is-waiting {
+  color: var(--color-warning);
+}
+
+.p04-item-icon.is-blocked {
+  color: var(--color-error);
+}
+
+.p04-item-icon.is-done {
+  color: var(--color-success);
+}
+
+.p04-item-icon.is-attention {
+  /* antd purple-6，Skill 允许的辅助语义色 */
+  color: #722ed1;
+}
+
+/* 系统图标色：Token + antd 预设色阶（与 Tag / Skill 辅助色约定一致） */
+.p04-item-icon.is-account {
+  color: var(--color-primary);
+}
+
+.p04-item-icon.is-mail {
+  /* antd cyan-6 */
+  color: #13c2c2;
+}
+
+.p04-item-icon.is-knowledge {
+  /* antd purple-6 */
+  color: #722ed1;
+}
+
+.p04-item-icon.is-board {
+  /* antd geekblue-6 */
+  color: #2f54eb;
+}
+
+.p04-item-icon.is-design {
+  /* antd magenta-6 */
+  color: #eb2f96;
+}
+
+.p04-item-icon.is-dashboard {
+  color: var(--color-warning);
+}
+
+.p04-item-icon.is-files {
+  /* antd orange-6 */
+  color: #fa8c16;
+}
+
+.p04-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.p04-page .p04-item-main {
+  gap: 6px;
+}
+
+.p04-item.is-compact .p04-item-main {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.p04-page .p04-item.is-compact .p04-item-main {
+  gap: 16px;
+}
+
+.p04-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.p04-item-title .ant-tag {
+  margin-inline-end: 0;
+}
+
+.p04-item-desc {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  line-height: 20px;
+}
+
+.p04-item-desc.is-failed.ant-typography {
+  color: var(--color-error);
+  white-space: normal;
+}
+
+.p04-item-desc.is-unknown.ant-typography {
+  color: var(--color-text-secondary);
+  white-space: normal;
+}
+
+.p04-item-next.ant-typography {
+  display: block;
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  line-height: 20px;
+}
+
+.p04-item-next-label {
+  margin-inline-end: 6px;
+  color: var(--color-text-quaternary, var(--color-text-tertiary));
+}
+
+.p04-page .p04-item.is-attention .p04-item-main {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.p04-page .p04-item.is-attention .p04-item-title {
+  margin-bottom: 2px;
+}
+
+.p04-item-progress {
+  margin-block: 4px 0;
+  max-width: 280px;
+}
+
+.p04-page .p04-item-progress {
+  margin-block: 2px 0;
+}
+
+.p04-item-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  justify-self: center;
+}
+
+.p04-item.is-running .p04-item-meta {
+  align-self: center;
+}
+
+.p04-meta-field {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.p04-meta-label {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  line-height: 22px;
+}
+
+.p04-meta-value {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.p04-item-action {
+  justify-self: end;
+  align-self: start;
+  white-space: nowrap;
+  line-height: 22px;
+}
+
+.p04-item.is-compact .p04-item-action {
+  align-self: center;
+}
+
+.p04-item-action .anticon-right {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.p04-item-chevron {
+  color: var(--color-text-quaternary);
+  font-size: 12px;
+}
+
+.p04-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--nav-space-4);
+  padding: var(--padding) var(--nav-space-6);
+  background: var(--color-fill-quaternary);
+  border-radius: var(--border-radius);
+}
+
+@media (max-width: 1280px) {
+  .p04-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 596px) {
+  .p04-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
