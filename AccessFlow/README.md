@@ -4,6 +4,8 @@
 
 当前需求以 [`01-prd/PRD-AccessFlow-v1.1.md`](01-prd/PRD-AccessFlow-v1.1.md) 为准。静态原型在 [`02-wireframe/`](02-wireframe/)。
 
+在线浏览：https://skylar-shao-bot.github.io/AccessFlow/
+
 ## 怎么用
 
 | 你要做什么 | 去哪里 |

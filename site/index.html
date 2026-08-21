@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AccessFlow · 在线浏览</title>
+    <link rel="icon" type="image/svg+xml" href="./app/logo-access-flow.svg" />
+    <style>
+      :root {
+        --primary: #1677ff;
+        --primary-hover: #4096ff;
+        --text: #1f1f1f;
+        --text-secondary: #595959;
+        --border: #f0f0f0;
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --radius: 8px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.5;
+      }
+
+      a { color: inherit; text-decoration: none; }
+
+      .page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      .hero {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .lead {
+        margin: 8px 0 0;
+        color: var(--text-secondary);
+        font-size: 15px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid transparent;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .btn-primary:hover { background: var(--primary-hover); }
+
+      .btn-ghost {
+        background: var(--card);
+        border-color: #d9d9d9;
+        color: var(--text);
+      }
+
+      .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .section { margin-top: 36px; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .card:hover {
+        border-color: #bae0ff;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+      }
+
+      .card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        object-position: top;
+        background: #fafafa;
+      }
+
+      .card-body { padding: 14px 16px 16px; }
+
+      .card-kicker {
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .card-title {
+        margin: 2px 0 4px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .card-desc {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .list a {
+        display: block;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+      }
+
+      .list a:hover {
+        border-color: #bae0ff;
+        color: var(--primary);
+      }
+
+      .list strong { display: block; font-size: 14px; }
+      .list span { color: var(--text-secondary); font-size: 13px; }
+
+      @media (max-width: 720px) {
+        .grid, .list { grid-template-columns: 1fr; }
+        .page { padding: 32px 16px 64px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <div class="brand">
+            <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+              <rect width="24" height="24" rx="6" fill="#1677ff"/>
+              <path d="M8.2 7.2c2.4 1.6 3.9 3.8 3.9 6.3 0 2.5-1.5 4.7-3.9 6.3 3.1-0.3 6.7-2.6 6.7-6.3S11.3 7.5 8.2 7.2Z" fill="white" fill-opacity="0.95"/>
+              <path d="M12.1 7.4c2.1 1.5 3.4 3.4 3.4 5.6 0 2.2-1.3 4.1-3.4 5.6 2.7-0.2 5.7-2.2 5.7-5.6s-3-5.4-5.7-5.6Z" fill="white" fill-opacity="0.55"/>
+            </svg>
+            <h1>AccessFlow</h1>
+          </div>
+          <p class="lead">新员工账号与权限开通 Agent · 可点击静态原型，数据写死陈晨案例</p>
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="./app/#/?demo=chenchen">打开工作台原型</a>
+          <a class="btn btn-ghost" href="https://github.com/Skylar-shao-bot/AccessFlow">GitHub 仓库</a>
+        </div>
+      </header>
+
+      <section class="section">
+        <h2>工作台页面</h2>
+        <div class="grid">
+          <a class="card" href="./app/#/?demo=chenchen">
+            <div class="card-body">
+              <div class="card-kicker">P-01</div>
+              <div class="card-title">新建开通</div>
+              <p class="card-desc">自然语言提交需求，预填陈晨入职原句后生成方案</p>
+            </div>
+          </a>
+          <a class="card" href="./app/#/plan">
+            <img src="./thumbs/P-02-开通方案审阅.png" alt="开通方案审阅" />
+            <div class="card-body">
+              <div class="card-kicker">P-02</div>
+              <div class="card-title">开通方案审阅</div>
+              <p class="card-desc">区分岗位标准、用户申请、Agent 建议和已排除项</p>
+            </div>
+          </a>
+          <a class="card" href="./app/#/confirm">
+            <img src="./thumbs/P-03-权限与执行确认.png" alt="权限与执行确认" />
+            <div class="card-body">
+              <div class="card-kicker">P-03</div>
+              <div class="card-title">权限与执行确认</div>
+              <p class="card-desc">按执行主体分组确认，确认不等于审批或开通</p>
+            </div>
+          </a>
+          <a class="card" href="./app/#/progress">
+            <img src="./thumbs/P-04-执行进度.png" alt="执行进度" />
+            <div class="card-body">
+              <div class="card-kicker">P-04</div>
+              <div class="card-title">跨系统执行进度</div>
+              <p class="card-desc">看七项进度、依赖阻塞和可执行操作</p>
+            </div>
+          </a>
+          <a class="card" href="./app/#/f01">
+            <img src="./thumbs/P-05-执行结果-F01.png" alt="执行结果" />
+            <div class="card-body">
+              <div class="card-kicker">P-05</div>
+              <div class="card-title">执行结果</div>
+              <p class="card-desc">固定部分完成：4 成功 / 1 失败 / 1 待审批 / 1 未知</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>演示文稿</h2>
+        <div class="list">
+          <a href="./presentations/%E6%96%B9%E6%A1%88%E4%B8%8E%E4%BD%93%E9%AA%8C%E7%BB%93%E6%9E%84.html">
+            <strong>方案与体验结构</strong>
+            <span>主演示：信息架构、主路径与体验原则</span>
+          </a>
+          <a href="./presentations/core-page-visual-maps.html">
+            <strong>核心页视觉地图</strong>
+            <span>P-01 到 P-05 的页面构图对照</span>
+          </a>
+          <a href="./presentations/page-architecture.html">
+            <strong>页面架构</strong>
+            <span>工作台壳层与页面模块结构</span>
+          </a>
+          <a href="./presentations/experience-structure.html">
+            <strong>体验结构</strong>
+            <span>确认、审批、开通如何分开表达</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>文档</h2>
+        <div class="list">
+          <a href="https://github.com/Skylar-shao-bot/AccessFlow/blob/main/AccessFlow/01-prd/PRD-AccessFlow-v1.1.md">
+            <strong>PRD v1.1</strong>
+            <span>当前需求基线</span>
+          </a>
+          <a href="https://github.com/Skylar-shao-bot/AccessFlow/blob/main/AccessFlow/00-backlog/project-backlog.md">
+            <strong>Backlog</strong>
+            <span>本期范围与 Later 项</span>
+          </a>
+          <a href="https://github.com/Skylar-shao-bot/AccessFlow/tree/main/AccessFlow/04-specs">
+            <strong>页面规格</strong>
+            <span>P-01 到 P-05 单页 spec</span>
+          </a>
+          <a href="https://github.com/Skylar-shao-bot/AccessFlow/blob/main/AccessFlow/specs/constitution.md">
+            <strong>项目硬规则</strong>
+            <span>规格分层与范围冻结</span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

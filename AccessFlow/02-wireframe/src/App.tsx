@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { Navigate, createBrowserRouter, createHashRouter, type RouteObject } from 'react-router-dom';
 import SideLayout from './layouts/SideLayout';
 import P01Request from './pages/P01Request';
 import P02Review from './pages/P02Review';
@@ -7,7 +7,7 @@ import P04Progress from './pages/P04Progress';
 import P05Result from './pages/P05Result';
 import PlaceholderPage from './pages/PlaceholderPage';
 
-export const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     element: <SideLayout />,
     children: [
@@ -28,4 +28,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+export const router = import.meta.env.PROD
+  ? createHashRouter(routes)
+  : createBrowserRouter(routes);

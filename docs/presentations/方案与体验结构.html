@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessFlow · 方案与体验结构</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===========================================
+           THEME — Clearance Ledger
+           Cream paper, ink navy, vermillion stamps.
+           Designed for a permission-clearance reading deck.
+           =========================================== */
+        :root {
+            --paper: #f3eee4;
+            --paper-deep: #ebe4d6;
+            --ink: #1b212c;
+            --ink-soft: #3d4450;
+            --muted: #6b675e;
+            --rule: #d6cebe;
+            --rule-strong: #b9b09c;
+            --vermillion: #b83a2a;
+            --vermillion-soft: #f3ddd6;
+            --forest: #2f5d45;
+            --forest-soft: #dce8e0;
+            --ochre: #b5741a;
+            --ochre-soft: #f3e6cc;
+            --slate: #44505f;
+            --slate-soft: #e1e5ea;
+            --navy: #1b212c;
+            --cream: #faf6ee;
+            --slide-bg: #f3eee4;
+            --stage-bg: #1b212c;
+
+            --font-display: "Newsreader", "Songti SC", serif;
+            --font-ui: "Sora", "PingFang SC", sans-serif;
+            --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.55s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===========================================
+           FIXED 16:9 STAGE: MANDATORY BASE STYLES
+           Include this ENTIRE file in every presentation.
+           Slides are authored at 1920×1080 and scaled as a whole.
+           =========================================== */
+
+        /* 1. Lock the browser viewport */
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+
+        /* 2. Full-window deck viewport */
+        .deck-viewport {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+
+        /* 3. Fixed 16:9 design canvas.
+           JavaScript sets transform: translate(...) scale(...). */
+        .deck-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            transform-origin: 0 0;
+            background: var(--slide-bg, #fff);
+        }
+
+        /* 4. Slides stack inside the fixed stage.
+           Content must be laid out at 1920×1080, not reflowed per device. */
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            background: var(--slide-bg, #fff);
+        }
+
+        .slide.active,
+        .slide.visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
+
+        /* 5. Keep media inside authored slide bounds */
+        img,
+        video,
+        canvas,
+        svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* 6. Presentation chrome stays outside the slide design system */
+        .deck-controls {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        /* 7. Print one fixed-size slide per page */
+        @media print {
+            html,
+            body {
+                width: 1920px;
+                height: auto;
+                overflow: visible;
+                background: #fff;
+            }
+
+            .deck-viewport {
+                position: static;
+                overflow: visible;
+                background: #fff;
+            }
+
+            .deck-stage {
+                position: static;
+                width: auto;
+                height: auto;
+                transform: none !important;
+                background: none;
+            }
+
+            .slide {
+                position: relative;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                width: 1920px;
+                height: 1080px;
+                break-after: page;
+                page-break-after: always;
+            }
+
+            .slide:last-child {
+                break-after: auto;
+                page-break-after: auto;
+            }
+
+            .deck-controls {
+                display: none !important;
+            }
+        }
+
+        /* 8. Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+
+        /* ===========================================
+           SLIDE CHROME — ledger paper, hairline frame
+           =========================================== */
+        .slide {
+            color: var(--ink);
+            font-family: var(--font-ui);
+            background:
+                linear-gradient(180deg, rgba(184, 58, 42, 0.08) 0 8px, transparent 8px),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0,
+                    transparent 47px,
+                    rgba(27, 33, 44, 0.025) 47px,
+                    rgba(27, 33, 44, 0.025) 48px
+                ),
+                var(--paper);
+        }
+
+        .slide-frame {
+            position: absolute;
+            inset: 28px 32px 36px;
+            border: 1px solid var(--rule-strong);
+            pointer-events: none;
+        }
+
+        .slide-inner {
+            position: absolute;
+            inset: 52px 64px 72px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kicker {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 18px;
+        }
+
+        .kicker em {
+            font-style: normal;
+            color: var(--vermillion);
+            letter-spacing: 0.2em;
+        }
+
+        .slide-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 52px;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .slide-lead {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--ink-soft);
+            line-height: 1.45;
+            max-width: 1480px;
+            margin-bottom: 28px;
+        }
+
+        .hairline {
+            height: 1px;
+            background: var(--rule);
+            margin: 0 0 28px;
+        }
+
+        .page-mark {
+            position: absolute;
+            right: 64px;
+            bottom: 22px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            color: var(--muted);
+        }
+
+        .notes { display: none; }
+
+        /* ===========================================
+           ANIMATION
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+        .slide.visible .reveal:nth-child(2) { transition-delay: 0.12s; }
+        .slide.visible .reveal:nth-child(3) { transition-delay: 0.19s; }
+        .slide.visible .reveal:nth-child(4) { transition-delay: 0.26s; }
+        .slide.visible .reveal:nth-child(5) { transition-delay: 0.33s; }
+        .slide.visible .reveal:nth-child(6) { transition-delay: 0.40s; }
+
+        /* ===========================================
+           TITLE SLIDE
+           =========================================== */
+        .title-slide {
+            background:
+                radial-gradient(ellipse at 88% 12%, rgba(184, 58, 42, 0.10) 0%, transparent 42%),
+                linear-gradient(180deg, #1b212c 0 108px, var(--paper) 108px);
+        }
+
+        .title-slide .mast {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 108px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 72px;
+            color: #f3eee4;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .title-body {
+            position: absolute;
+            left: 72px;
+            right: 72px;
+            top: 168px;
+            bottom: 72px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chapter-no {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            letter-spacing: 0.22em;
+            color: var(--vermillion);
+            text-transform: uppercase;
+            margin-bottom: 22px;
+        }
+
+        .title-body h1 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 92px;
+            line-height: 0.98;
+            letter-spacing: -0.03em;
+            max-width: 1400px;
+        }
+
+        .title-rule {
+            width: 96px;
+            height: 4px;
+            background: var(--vermillion);
+            margin: 36px 0 28px;
+        }
+
+        .title-body .manifesto {
+            font-family: var(--font-display);
+            font-size: 30px;
+            line-height: 1.45;
+            color: var(--ink-soft);
+            max-width: 1320px;
+            font-weight: 400;
+        }
+
+        .title-meta {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr;
+            gap: 28px;
+            border-top: 1px solid var(--rule);
+            padding-top: 28px;
+        }
+
+        .title-meta h3 {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .title-meta p {
+            font-size: 20px;
+            line-height: 1.4;
+            color: var(--ink);
+        }
+
+        /* ===========================================
+           TWO-COLUMN + CARDS
+           =========================================== */
+        .split {
+            display: grid;
+            gap: 24px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .split-2 { grid-template-columns: 1fr 1fr; }
+        .split-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .split-4 { grid-template-columns: 1.15fr 1fr 1fr 1fr; }
+
+        .panel {
+            background: var(--cream);
+            border: 1px solid var(--rule);
+            padding: 24px 26px 22px;
+            min-height: 0;
+        }
+
+        .panel h3 {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .panel h4 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .panel p, .panel li {
+            font-size: 17px;
+            line-height: 1.5;
+            color: var(--ink-soft);
+        }
+
+        .panel ul { padding-left: 18px; }
+        .panel li + li { margin-top: 8px; }
+
+        .panel.do { border-left: 5px solid var(--forest); }
+        .panel.dont { border-left: 5px solid var(--vermillion); }
+        .panel.job { border-left: 5px solid var(--ink); }
+
+        .job-quote {
+            font-family: var(--font-display);
+            font-size: 30px;
+            line-height: 1.32;
+            color: var(--ink);
+            margin: 8px 0 18px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .stat {
+            background: var(--paper-deep);
+            padding: 12px 14px;
+        }
+
+        .stat b {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat span {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .do-list, .dont-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .do-list li, .dont-list li {
+            position: relative;
+            padding-left: 22px;
+            margin-top: 10px;
+            font-size: 17px;
+            line-height: 1.45;
+        }
+
+        .do-list li::before,
+        .dont-list li::before {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .do-list li::before { content: "+"; color: var(--forest); }
+        .dont-list li::before { content: "–"; color: var(--vermillion); }
+
+        /* ===========================================
+           THREE DECISIONS
+           =========================================== */
+        .decision {
+            display: flex;
+            flex-direction: column;
+            background: var(--cream);
+            border: 1px solid var(--rule);
+            padding: 28px 26px 24px;
+            min-height: 0;
+        }
+
+        .decision .num {
+            font-family: var(--font-display);
+            font-size: 56px;
+            font-weight: 600;
+            color: var(--vermillion);
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+
+        .decision h3 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+
+        .decision p {
+            font-size: 17px;
+            line-height: 1.5;
+            color: var(--ink-soft);
+            flex: 1;
+        }
+
+        .decision .consequence {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--rule);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            color: var(--ink);
+            line-height: 1.45;
+        }
+
+        /* ===========================================
+           IA PATH
+           =========================================== */
+        .path {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .path-node {
+            background: var(--cream);
+            border: 1px solid var(--rule);
+            padding: 16px 14px 14px;
+            position: relative;
+            min-height: 168px;
+        }
+
+        .path-node .code {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            color: var(--vermillion);
+            margin-bottom: 8px;
+        }
+
+        .path-node h3 {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .path-node p {
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--muted);
+        }
+
+        .path-node.exec { background: #f7f1e4; }
+        .path-node.result { background: var(--vermillion-soft); border-color: #e4c4bb; }
+
+        .ia-bottom {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 18px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .chip-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .chip {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 6px 10px;
+            border: 1px solid var(--rule);
+            background: var(--paper);
+            color: var(--ink-soft);
+        }
+
+        .nav-note {
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--ink-soft);
+        }
+
+        .nav-note strong { color: var(--ink); font-weight: 600; }
+
+        /* ===========================================
+           ROLES
+           =========================================== */
+        .role {
+            background: var(--cream);
+            border: 1px solid var(--rule);
+            padding: 22px 22px 18px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .role .who {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .role h3 {
+            font-family: var(--font-display);
+            font-size: 30px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .role .scope {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .role ul {
+            list-style: none;
+            flex: 1;
+        }
+
+        .role li {
+            font-size: 16px;
+            line-height: 1.45;
+            color: var(--ink-soft);
+            padding: 7px 0 7px 16px;
+            position: relative;
+            border-bottom: 1px solid rgba(214, 206, 190, 0.6);
+        }
+
+        .role li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 15px;
+            width: 7px;
+            height: 7px;
+            background: var(--ink);
+        }
+
+        .role.manager li::before { background: var(--ink); }
+        .role.agent li::before { background: var(--ochre); }
+        .role.approver li::before { background: var(--slate); }
+        .role.system li::before { background: var(--forest); }
+
+        .role .boundary {
+            margin-top: 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--vermillion);
+        }
+
+        /* ===========================================
+           FLOW
+           =========================================== */
+        .flow {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            margin-bottom: 22px;
+        }
+
+        .flow-step {
+            flex: 1;
+            background: var(--cream);
+            border: 1px solid var(--rule);
+            padding: 16px 14px;
+            margin-right: -1px;
+        }
+
+        .flow-step .seq {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            color: var(--vermillion);
+            margin-bottom: 8px;
+        }
+
+        .flow-step h3 {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .flow-step p {
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--muted);
+        }
+
+        .flow-step.human { border-top: 4px solid var(--ink); }
+        .flow-step.agent { border-top: 4px solid var(--ochre); }
+        .flow-step.sys { border-top: 4px solid var(--forest); }
+
+        .branch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .branch {
+            border: 1px dashed var(--rule-strong);
+            padding: 18px 18px 16px;
+            background: rgba(250, 246, 238, 0.6);
+        }
+
+        .branch h3 {
+            font-family: var(--font-display);
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .branch p {
+            font-size: 16px;
+            line-height: 1.45;
+            color: var(--ink-soft);
+        }
+
+        /* ===========================================
+           F01
+           =========================================== */
+        .f01-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--navy);
+            color: var(--paper);
+            padding: 18px 24px;
+            margin-bottom: 18px;
+        }
+
+        .f01-banner strong {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .f01-banner span {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 0.08em;
+            color: #d6cebe;
+        }
+
+        .f01-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr 1fr 1fr;
+            gap: 14px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .bucket {
+            border: 1px solid var(--rule);
+            padding: 18px 16px 14px;
+            background: var(--cream);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bucket .count {
+            font-family: var(--font-display);
+            font-size: 42px;
+            font-weight: 600;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .bucket .label {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .bucket.ok { border-top: 4px solid var(--forest); }
+        .bucket.ok .count, .bucket.ok .label { color: var(--forest); }
+        .bucket.fail { border-top: 4px solid var(--vermillion); background: var(--vermillion-soft); }
+        .bucket.fail .count, .bucket.fail .label { color: var(--vermillion); }
+        .bucket.wait { border-top: 4px solid var(--ochre); background: var(--ochre-soft); }
+        .bucket.wait .count, .bucket.wait .label { color: var(--ochre); }
+        .bucket.unk { border-top: 4px solid var(--slate); background: var(--slate-soft); }
+        .bucket.unk .count, .bucket.unk .label { color: var(--slate); }
+
+        .item-line {
+            font-size: 15px;
+            line-height: 1.4;
+            color: var(--ink);
+            padding: 7px 0;
+            border-top: 1px solid rgba(27, 33, 44, 0.08);
+        }
+
+        .item-line small {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .next-act {
+            margin-top: auto;
+            padding-top: 12px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--ink);
+        }
+
+        /* ===========================================
+           STATUS TABLES
+           =========================================== */
+        .tables {
+            display: grid;
+            grid-template-columns: 1.05fr 1.15fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        caption {
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        th {
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 500;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--rule-strong);
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--rule);
+            vertical-align: top;
+            line-height: 1.35;
+            color: var(--ink-soft);
+        }
+
+        td.state {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 2px 7px;
+            border: 1px solid currentColor;
+        }
+
+        .badge-ok { color: var(--forest); }
+        .badge-stop { color: var(--vermillion); }
+        .badge-wait { color: var(--ochre); }
+        .badge-info { color: var(--slate); }
+
+        .legend {
+            display: flex;
+            gap: 22px;
+            margin-top: 14px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .legend b { color: var(--ink); font-weight: 600; }
+
+        /* ===========================================
+           DECK CONTROLS + EDIT MODE
+           =========================================== */
+        .deck-controls {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(27, 33, 44, 0.88);
+            color: #f3eee4;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+        }
+
+        .deck-controls button {
+            background: transparent;
+            border: 0;
+            color: inherit;
+            cursor: pointer;
+            font: inherit;
+            padding: 4px 8px;
+        }
+
+        .progress-track {
+            width: 120px;
+            height: 3px;
+            background: rgba(243, 238, 228, 0.2);
+        }
+
+        .progress-fill {
+            height: 3px;
+            background: #b83a2a;
+            width: 0;
+        }
+
+        .edit-hotzone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .edit-toggle {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            border: 1px solid #d6cebe;
+            background: #faf6ee;
+            color: #1b212c;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.editing [contenteditable="true"] {
+            outline: 1px dashed rgba(184, 58, 42, 0.45);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-hotzone" title="编辑模式"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">编辑</button>
+
+    <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <!-- ========== SLIDE 1: TITLE ========== -->
+            <section class="slide title-slide active">
+                <div class="mast">
+                    <span>AccessFlow</span>
+                    <span>新员工账号与权限开通 Agent</span>
+                    <span>01 / 方案与体验结构</span>
+                </div>
+                <div class="title-body">
+                    <div class="chapter-no reveal">Chapter 01 · Experience Structure</div>
+                    <h1 class="reveal">先看懂该开什么，<br>再决定谁来开。</h1>
+                    <div class="title-rule reveal"></div>
+                    <p class="manifesto reveal">把复杂的权限开通，从系统操作变成可理解、可确认、可追踪、可恢复的 Agent 协作。本期只服务用人经理王璐，只走陈晨这一条入职工单。</p>
+                    <div class="title-meta reveal">
+                        <div>
+                            <h3>用户要完成的事</h3>
+                            <p>9 月 7 日 9:00 前，安全地为陈晨准备该有的账号与权限，并看清每一项现在怎样。</p>
+                        </div>
+                        <div>
+                            <h3>工作台角色</h3>
+                            <p>经理确认 · Agent 执行<br>审批人只显示状态</p>
+                        </div>
+                        <div>
+                            <h3>演示终态</h3>
+                            <p>F01 部分完成<br>4 成功 / 1 失败 / 1 待审 / 1 未知</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="notes">开场先把一句话钉住：经理不是来操作系统的，是来确认该开什么、看清没开成的下一步。强调本期只有王璐这一个操作者。</div>
+            </section>
+
+            <!-- ========== SLIDE 2: JOB + SCOPE ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>Job &amp; Scope</em></div>
+                    <h2 class="slide-title reveal">用户要完成什么，方案做什么、不做什么</h2>
+                    <p class="slide-lead reveal">王璐不是 IT。她要的不是工单系统，而是一次少追问、可确认、失败了也知道该找谁的入职准备。</p>
+                    <div class="hairline"></div>
+                    <div class="split split-2">
+                        <article class="panel job reveal">
+                            <h3>要完成的工作</h3>
+                            <p class="job-quote">用最少追问，安全地为指定新员工开通「该有的权限」，并看清每一项现在怎样。</p>
+                            <p>场景：陈晨将作为软件产品设计师加入上海产品研发部，参与 Atlas。参考同岗位，但第一天必须能开始工作，且不能被反复追问。</p>
+                            <div class="stat-row">
+                                <div class="stat"><b>30 秒</b><span>识别 7 项建议与 2 项排除</span></div>
+                                <div class="stat"><b>0 越权</b><span>未确认不得执行，成功不重复</span></div>
+                                <div class="stat"><b>说清下一步</b><span>许可证转人工、数据等审批、文件库先查询</span></div>
+                            </div>
+                        </article>
+                        <div style="display:grid;grid-template-rows:1fr 1fr;gap:16px;">
+                            <article class="panel do reveal">
+                                <h3>本期做</h3>
+                                <ul class="do-list">
+                                    <li>单条自然语言开通：输入 → 核对 → 方案 → 确认 → 执行 → F01 → 结果</li>
+                                    <li>Agent 读人事、岗位模板、权限规则、审批状态，生成可审阅方案</li>
+                                    <li>逐项记录编号、依赖、审批、结果与允许操作</li>
+                                </ul>
+                            </article>
+                            <article class="panel dont reveal">
+                                <h3>本期不做</h3>
+                                <ul class="dont-list">
+                                    <li>招聘、合同、薪酬、设备、培训、离职；员工端与审批人操作端</li>
+                                    <li>批量开通、独立记录列表、一键催办、经理改派审批人</li>
+                                    <li>真实企业系统、通用权限平台、生产级工作流</li>
+                                </ul>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-mark">02 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 3: THREE DECISIONS ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>Key Decisions</em></div>
+                    <h2 class="slide-title reveal">三个关键设计决定</h2>
+                    <p class="slide-lead reveal">不是功能清单，是体验上必须守住的三条线。评审时先对齐这三条，再看页面。</p>
+                    <div class="hairline"></div>
+                    <div class="split split-3">
+                        <article class="decision reveal">
+                            <div class="num">01</div>
+                            <h3>确认 ≠ 审批 ≠ 开通</h3>
+                            <p>四个事实必须分开：Agent 建议、经理确认、审批人批准、系统真正写入。王璐点「确认方案」只表示授权开始处理，不表示数据看板已获批，更不表示账号已经存在。</p>
+                            <div class="consequence">落地：未确认不得执行；待审批项不得假装已开通；整单状态不能用一个 pending 混装。</div>
+                        </article>
+                        <article class="decision reveal">
+                            <div class="num">02</div>
+                            <h3>参考同岗位，不复制同岗位</h3>
+                            <p>「参考同岗位员工」是最高风险假设。岗位标准是基线，同事曾经用过的客户数据导出、生产系统管理属于历史特殊权限，必须排除。Agent 可以发现差异，但不能把别人的例外变成新人的默认。</p>
+                            <div class="consequence">落地：排除项锁定，不能加入执行队列；修改可改范围/有效期/取消勾选，不能越权、不能加回排除项。</div>
+                        </article>
+                        <article class="decision reveal">
+                            <div class="num">03</div>
+                            <h3>正常压缩，异常展开</h3>
+                            <p>经理要先看到结论和下一步，而不是七个系统的日志。成功项收束；失败、未知、待审批、排除项优先暴露。F01 强制走到部分完成，就是为了训练这套阅读方式——四项成功也不能写成全部完成。</p>
+                            <div class="consequence">落地：成功锁定禁止重试；未知只查询原请求；每项都回答发生了什么、为什么、谁负责、下一步做什么。</div>
+                        </article>
+                    </div>
+                </div>
+                <div class="page-mark">03 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 4: IA ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>Information Architecture</em></div>
+                    <h2 class="slide-title reveal">页面和信息怎样组织</h2>
+                    <p class="slide-lead reveal">概念上有三个模块：权限开通、正在执行、开通记录。本期不新开列表首页，用一条向导把工单阶段走完。</p>
+                    <div class="hairline"></div>
+                    <div class="path reveal">
+                        <div class="path-node">
+                            <div class="code">P-01 · 权限开通</div>
+                            <h3>需求输入</h3>
+                            <p>自然语言提交。先核对、再生成方案，这一步不创建任何账号。</p>
+                        </div>
+                        <div class="path-node">
+                            <div class="code">P-02 · 1440</div>
+                            <h3>审阅方案</h3>
+                            <p>7 项建议、2 项排除、来源差异。可改范围与有效期，排除项锁定。</p>
+                        </div>
+                        <div class="path-node">
+                            <div class="code">P-03 · 1440</div>
+                            <h3>确认执行</h3>
+                            <p>按谁来做分组。只展示将进队列的项；排除项不再出现。</p>
+                        </div>
+                        <div class="path-node exec">
+                            <div class="code">P-04 · 正在执行</div>
+                            <h3>跨系统进度</h3>
+                            <p>整单 + 七项。账号未成，依赖项保持阻塞。</p>
+                        </div>
+                        <div class="path-node result">
+                            <div class="code">P-05 · F01 · 1024</div>
+                            <h3>部分完成</h3>
+                            <p>四类结果并置。必须能判断下一步该谁处理。</p>
+                        </div>
+                        <div class="path-node">
+                            <div class="code">P-06 · 开通记录</div>
+                            <h3>最终结果</h3>
+                            <p>只读收口。与 F01 事实一致，不得写成全部完成。</p>
+                        </div>
+                    </div>
+                    <div class="ia-bottom reveal">
+                        <article class="panel">
+                            <h3>共享信息层 · 不单独成页</h3>
+                            <div class="chip-wrap">
+                                <span class="chip">流程 Stepper</span>
+                                <span class="chip">员工摘要卡</span>
+                                <span class="chip">方案差异</span>
+                                <span class="chip">权限项列表</span>
+                                <span class="chip">审批状态</span>
+                                <span class="chip">执行步骤</span>
+                                <span class="chip">结果回执</span>
+                                <span class="chip">Agent 说明区</span>
+                                <span class="chip">详情抽屉</span>
+                            </div>
+                            <p style="margin-top:16px;">先给建议 / 排除 / 下一步，细则进卡片和抽屉。确认后不可再改方案。</p>
+                        </article>
+                        <article class="panel">
+                            <h3>导航规则</h3>
+                            <p class="nav-note">单工单向导，顶部 Stepper 显示阶段。<strong>无底部 Tab，无历史列表。</strong> P-02 / P-03 可返回；确认写入后进入执行，不再回到可改方案的确认页。抽屉和修改面板都不是独立页面。</p>
+                        </article>
+                    </div>
+                </div>
+                <div class="page-mark">04 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 5: ROLES ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>Roles</em></div>
+                    <h2 class="slide-title reveal">经理、Agent、审批人、外部系统分别做什么</h2>
+                    <p class="slide-lead reveal">界面只服务经理。其余角色通过状态出现，不新开操作端。人机分工一旦含糊，确认就会被当成审批或开通。</p>
+                    <div class="hairline"></div>
+                    <div class="split split-4">
+                        <article class="role manager reveal">
+                            <div class="who">唯一操作者</div>
+                            <h3>用人经理</h3>
+                            <p class="scope">王璐 · 本期唯一界面用户</p>
+                            <ul>
+                                <li>用自然语言提出开通需求</li>
+                                <li>审阅方案，改范围 / 有效期 / 勾选</li>
+                                <li>确认授权，启动允许执行的项</li>
+                                <li>在异常处判断下一步该找谁</li>
+                            </ul>
+                            <div class="boundary">确认 ≠ 代替审批，也不能改派审批人</div>
+                        </article>
+                        <article class="role agent reveal">
+                            <div class="who">工作台内的执行者</div>
+                            <h3>Agent</h3>
+                            <p class="scope">核对、建议、已授权后执行</p>
+                            <ul>
+                                <li>识别意图，读取人事 / 模板 / 规则</li>
+                                <li>生成 Verified Context 与开通方案</li>
+                                <li>信息不够时一次只问一个问题</li>
+                                <li>确认后调用系统、跟踪、解释状态</li>
+                            </ul>
+                            <div class="boundary">未确认不得创建任何账号或权限</div>
+                        </article>
+                        <article class="role approver reveal">
+                            <div class="who">状态出现，无操作端</div>
+                            <h3>审批人</h3>
+                            <p class="scope">数据 / 生产 / 管理类负责人</p>
+                            <ul>
+                                <li>批准或拒绝对应敏感权限</li>
+                                <li>本题只显示角色与审批状态</li>
+                                <li>产品数据看板：数据负责人</li>
+                                <li>审批完成前该项不得开通</li>
+                            </ul>
+                            <div class="boundary">不做审批人端，不做邮件催办</div>
+                        </article>
+                        <article class="role system reveal">
+                            <div class="who">结果来源</div>
+                            <h3>外部系统</h3>
+                            <p class="scope">人事、审批与七个目标系统 · Mock</p>
+                            <ul>
+                                <li>返回人事事实与规则，不由经理手填</li>
+                                <li>真正创建账号或写入权限</li>
+                                <li>回传成功、失败、超时未知</li>
+                                <li>公司账号是下游项的依赖门闩</li>
+                            </ul>
+                            <div class="boundary">前端不得猜测 allowedActions</div>
+                        </article>
+                    </div>
+                </div>
+                <div class="page-mark">05 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 6: MAIN FLOW ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>Main Flow</em></div>
+                    <h2 class="slide-title reveal">主流程：先核验，再授权，再执行</h2>
+                    <p class="slide-lead reveal">陈晨主路径不触发询问。询问能力必须存在，用于空输入、冲突和生成失败。核对阶段只产出已核验上下文，不创建账号。</p>
+                    <div class="hairline"></div>
+                    <div class="flow reveal">
+                        <div class="flow-step human">
+                            <div class="seq">01 · 经理</div>
+                            <h3>输入需求</h3>
+                            <p>自然语言提交。空输入不发请求。</p>
+                        </div>
+                        <div class="flow-step agent">
+                            <div class="seq">02 · Agent</div>
+                            <h3>核对上下文</h3>
+                            <p>人事 → 岗位模板 → 规则 → 审批。用户原文先当待核验。</p>
+                        </div>
+                        <div class="flow-step human">
+                            <div class="seq">03 · 经理</div>
+                            <h3>审阅方案</h3>
+                            <p>看懂 7 建议 + 2 排除。修改后按规则重校验。</p>
+                        </div>
+                        <div class="flow-step human">
+                            <div class="seq">04 · 经理</div>
+                            <h3>确认授权</h3>
+                            <p>写入 CONFIRMED。允许项开始处理，审批项进入待审。</p>
+                        </div>
+                        <div class="flow-step sys">
+                            <div class="seq">05 · 系统</div>
+                            <h3>逐项执行</h3>
+                            <p>账号成功后，依赖项才解除阻塞。</p>
+                        </div>
+                        <div class="flow-step agent">
+                            <div class="seq">06 · 结果</div>
+                            <h3>F01 收口</h3>
+                            <p>部分完成。解释谁在处理、下一步做什么。</p>
+                        </div>
+                    </div>
+                    <div class="branch-grid reveal">
+                        <article class="branch">
+                            <h3>信息不够就停</h3>
+                            <p>关键缺失或冲突会影响方案时，一次只问一个必要问题，然后重新核对。与方案无关的缺失不问。能自动补齐的不问。</p>
+                        </article>
+                        <article class="branch">
+                            <h3>条件不够就等</h3>
+                            <p>无需审批且条件满足 → 可直接执行。需要审批 → 等待负责人，批准前不得开通该项。许可证不足、持续未知 → 转人工。</p>
+                        </article>
+                        <article class="branch">
+                            <h3>结果不明就不重开</h3>
+                            <p>成功项锁定，禁止再执行。超时无结果只查询原请求，不生成新申请。拒绝、越权、依赖失败时停止该项并解释。</p>
+                        </article>
+                    </div>
+                </div>
+                <div class="page-mark">06 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 7: F01 ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>F01 Partial Complete</em></div>
+                    <h2 class="slide-title reveal">F01：部分完成是主路径，不是失败态</h2>
+                    <p class="slide-lead reveal">演示必须停在这个截面。四项成功不能写成全部完成。页面要同时说清：已完成什么、谁仍在处理、哪里要人工、Agent 下一步。</p>
+                    <div class="f01-banner reveal">
+                        <strong>整单状态 · PARTIAL_COMPLETE</strong>
+                        <span>4 已开通 / 1 失败转人工 / 1 等待数据负责人 / 1 结果未知只查询</span>
+                    </div>
+                    <div class="f01-grid reveal">
+                        <article class="bucket ok">
+                            <div class="count">4</div>
+                            <div class="label">已开通 · 锁定</div>
+                            <div class="item-line">公司账号<small>标准员工账号 · 显示回执</small></div>
+                            <div class="item-line">邮件与即时通信<small>普通成员 · 依赖账号已解除</small></div>
+                            <div class="item-line">知识库<small>全员内容只读</small></div>
+                            <div class="item-line">Atlas 项目看板<small>可编辑任务，不可管理项目</small></div>
+                            <div class="next-act">可用操作：查看详情 · 禁止重复执行</div>
+                        </article>
+                        <article class="bucket fail">
+                            <div class="count">1</div>
+                            <div class="label">失败 · 转人工</div>
+                            <div class="item-line">设计工具<small>Atlas 团队编辑者</small></div>
+                            <div class="item-line">原因<small>无可用许可证</small></div>
+                            <div class="next-act">下一步：联系工具管理员。AccessFlow 不会重复开通已成功项。</div>
+                        </article>
+                        <article class="bucket wait">
+                            <div class="count">1</div>
+                            <div class="label">待审批 · 未执行</div>
+                            <div class="item-line">产品数据看板<small>只读、不可导出</small></div>
+                            <div class="item-line">审批人<small>数据负责人 · 12 月 31 日失效</small></div>
+                            <div class="next-act">可用操作：查看审批详情。批准前不会开通。本期不做催办。</div>
+                        </article>
+                        <article class="bucket unk">
+                            <div class="count">1</div>
+                            <div class="label">未知 · 只查询</div>
+                            <div class="item-line">Atlas 项目文件库<small>项目目录读写，不含客户原始资料</small></div>
+                            <div class="item-line">原因<small>请求超时，无法判断是否已开通</small></div>
+                            <div class="next-act">可用操作：查询原请求。禁止直接重试，不生成新申请编号。</div>
+                        </article>
+                    </div>
+                </div>
+                <div class="page-mark">07 / 08</div>
+            </section>
+
+            <!-- ========== SLIDE 8: STATES + ACTIONS ========== -->
+            <section class="slide">
+                <div class="slide-frame"></div>
+                <div class="slide-inner">
+                    <div class="kicker reveal"><span>AccessFlow · 01 方案与体验结构</span><em>States &amp; Allowed Actions</em></div>
+                    <h2 class="slide-title reveal">整次入职，和单个开通项，现在能做什么</h2>
+                    <p class="slide-lead reveal">前端状态由四维事实组合：来源、经理确认、审批、执行。按钮是否可点以后端 allowedActions 为准，禁用必须用文字解释原因。</p>
+                    <div class="hairline"></div>
+                    <div class="tables reveal">
+                        <table>
+                            <caption>整单 OnboardingCase</caption>
+                            <thead>
+                                <tr>
+                                    <th>状态</th>
+                                    <th>何时出现</th>
+                                    <th>经理可做</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="state">ANALYZING</td><td>正在核对</td><td>等待；不可确认</td></tr>
+                                <tr><td class="state">REVIEW_REQUIRED</td><td>方案已生成</td><td>审阅、修改、进入确认</td></tr>
+                                <tr><td class="state">AWAITING_CONFIRMATION</td><td>P-03 待授权</td><td>确认开始处理，或返回修改</td></tr>
+                                <tr><td class="state">IN_PROGRESS</td><td>已确认，正在执行</td><td>看进度、打开抽屉、查询未知项</td></tr>
+                                <tr><td class="state">PARTIAL_COMPLETE</td><td>F01 四类结果齐</td><td>看下一步；查询未知；失败转人工</td></tr>
+                                <tr><td class="state">NEEDS_ATTENTION</td><td>失败与未知同时在</td><td>处理项置顶，成功项仍锁定</td></tr>
+                                <tr><td class="state">COMPLETE</td><td>全部成功</td><td>陈晨演示不到此态</td></tr>
+                            </tbody>
+                        </table>
+                        <table>
+                            <caption>单项 AccessItem</caption>
+                            <thead>
+                                <tr>
+                                    <th>状态</th>
+                                    <th>含义</th>
+                                    <th>可用操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="state">NOT_STARTED / BLOCKED</td><td>排队，或在等公司账号</td><td>无执行操作；展示在等什么</td></tr>
+                                <tr><td class="state">RUNNING</td><td>正在调用目标系统</td><td>等待；可看调用编号</td></tr>
+                                <tr><td class="state">SUCCEEDED</td><td>已写入并锁定</td><td><span class="badge badge-ok">查看详情</span> <span class="badge badge-stop">禁止再执行</span></td></tr>
+                                <tr><td class="state">FAILED</td><td>明确失败，如无许可证</td><td><span class="badge badge-stop">转人工</span> 无重复开通</td></tr>
+                                <tr><td class="state">UNKNOWN</td><td>超时，无最终结果</td><td><span class="badge badge-info">仅查询原请求</span></td></tr>
+                                <tr><td class="state">PENDING 审批</td><td>需负责人批准</td><td><span class="badge badge-wait">查看审批</span> 未批不得开通</td></tr>
+                                <tr><td class="state">EXCLUDED</td><td>历史特殊权限</td><td><span class="badge badge-stop">永不进执行队列</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="legend reveal">
+                        <span><b>硬规则</b> 未确认不执行</span>
+                        <span><b>幂等</b> 成功不重复 · 未知不重开</span>
+                        <span><b>依赖</b> 账号失败则下游保持阻塞</span>
+                        <span><b>表达</b> 状态同时用图标、文字和颜色</span>
+                    </div>
+                </div>
+                <div class="page-mark">08 / 08</div>
+            </section>
+
+        </main>
+    </div>
+
+    <div class="deck-controls" id="deckControls">
+        <button type="button" id="prevBtn" aria-label="上一页">←</button>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span id="pageLabel">1 / 8</span>
+        <button type="button" id="nextBtn" aria-label="下一页">→</button>
+    </div>
+
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           Keyboard, wheel, swipe, hash deep-links.
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = Array.from(document.querySelectorAll(".slide"));
+                this.currentSlide = 0;
+                this.stage = document.getElementById("deckStage");
+                this.wheelLock = false;
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.setupButtons();
+                this.setupHash();
+                this.showSlide(this.hashIndex());
+            }
+
+            setupStageScale() {
+                const scale = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                scale();
+                window.addEventListener("resize", scale);
+            }
+
+            hashIndex() {
+                const match = location.hash.match(/#\/(\d+)/);
+                if (!match) return 0;
+                return Math.max(0, Math.min(Number(match[1]) - 1, this.slides.length - 1));
+            }
+
+            setupHash() {
+                window.addEventListener("hashchange", () => this.showSlide(this.hashIndex()));
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener("keydown", (e) => {
+                    if (e.target && e.target.getAttribute("contenteditable")) return;
+                    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) {
+                        e.preventDefault();
+                        this.next();
+                    } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) {
+                        e.preventDefault();
+                        this.prev();
+                    } else if (e.key === "Home") {
+                        e.preventDefault();
+                        this.showSlide(0);
+                    } else if (e.key === "End") {
+                        e.preventDefault();
+                        this.showSlide(this.slides.length - 1);
+                    }
+                });
+            }
+
+            setupTouchNav() {
+                let startX = 0;
+                document.addEventListener("touchstart", (e) => {
+                    startX = e.changedTouches[0].clientX;
+                }, { passive: true });
+                document.addEventListener("touchend", (e) => {
+                    const dx = e.changedTouches[0].clientX - startX;
+                    if (Math.abs(dx) > 50) dx < 0 ? this.next() : this.prev();
+                }, { passive: true });
+            }
+
+            setupWheelNav() {
+                window.addEventListener("wheel", (e) => {
+                    if (this.wheelLock) return;
+                    if (Math.abs(e.deltaY) < 20) return;
+                    this.wheelLock = true;
+                    e.deltaY > 0 ? this.next() : this.prev();
+                    setTimeout(() => { this.wheelLock = false; }, 700);
+                }, { passive: true });
+            }
+
+            setupButtons() {
+                document.getElementById("prevBtn").addEventListener("click", () => this.prev());
+                document.getElementById("nextBtn").addEventListener("click", () => this.next());
+            }
+
+            next() { this.showSlide(this.currentSlide + 1); }
+            prev() { this.showSlide(this.currentSlide - 1); }
+            goToSlide(index) { this.showSlide(index); }
+
+            showSlide(index) {
+                this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+                this.slides.forEach((slide, i) => {
+                    slide.classList.toggle("active", i === this.currentSlide);
+                    slide.classList.toggle("visible", i === this.currentSlide);
+                });
+                const n = this.currentSlide + 1;
+                document.getElementById("pageLabel").textContent = n + " / " + this.slides.length;
+                document.getElementById("progressFill").style.width = (n / this.slides.length * 100) + "%";
+                if (location.hash !== "#/" + n) history.replaceState(null, "", "#/" + n);
+            }
+        }
+
+        /* ===========================================
+           INLINE EDITING
+           Hover top-left or press E. Ctrl/Cmd+S downloads.
+           =========================================== */
+        class InlineEditor {
+            constructor() {
+                this.isActive = false;
+                this.key = "accessflow-structure-deck";
+                this.toggle = document.getElementById("editToggle");
+                this.restore();
+                this.bind();
+            }
+
+            bind() {
+                const hotzone = document.querySelector(".edit-hotzone");
+                let hideTimeout = null;
+                const show = () => {
+                    clearTimeout(hideTimeout);
+                    this.toggle.classList.add("show");
+                };
+                const hide = () => {
+                    hideTimeout = setTimeout(() => {
+                        if (!this.isActive) this.toggle.classList.remove("show");
+                    }, 400);
+                };
+                hotzone.addEventListener("mouseenter", show);
+                hotzone.addEventListener("mouseleave", hide);
+                this.toggle.addEventListener("mouseenter", () => clearTimeout(hideTimeout));
+                this.toggle.addEventListener("mouseleave", hide);
+                this.toggle.addEventListener("click", () => this.toggleEditMode());
+                hotzone.addEventListener("click", () => this.toggleEditMode());
+                document.addEventListener("keydown", (e) => {
+                    if ((e.key === "e" || e.key === "E") && !e.target.getAttribute("contenteditable")) {
+                        this.toggleEditMode();
+                    }
+                    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+                        e.preventDefault();
+                        this.saveFile();
+                    }
+                });
+            }
+
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                document.body.classList.toggle("editing", this.isActive);
+                this.toggle.classList.toggle("active", this.isActive);
+                this.toggle.textContent = this.isActive ? "完成" : "编辑";
+                document.querySelectorAll("h1,h2,h3,h4,p,li,td,th,caption,.job-quote,.manifesto,.next-act,.item-line,.nav-note,.consequence,.scope").forEach((el) => {
+                    if (el.closest(".deck-controls") || el.closest(".notes")) return;
+                    el.setAttribute("contenteditable", this.isActive ? "true" : "false");
+                });
+                if (this.isActive) {
+                    document.addEventListener("input", this.persist);
+                } else {
+                    document.removeEventListener("input", this.persist);
+                    this.persist();
+                }
+            }
+
+            persist = () => {
+                localStorage.setItem(this.key, document.getElementById("deckStage").innerHTML);
+            };
+
+            restore() {
+                const saved = localStorage.getItem(this.key);
+                if (saved) document.getElementById("deckStage").innerHTML = saved;
+            }
+
+            saveFile() {
+                const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+                const blob = new Blob([html], { type: "text/html" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "方案与体验结构.html";
+                a.click();
+            }
+        }
+
+        const editor = new InlineEditor();
+        const presentation = new SlidePresentation();
+        window.presentation = presentation;
+    </script>
+</body>
+</html>
