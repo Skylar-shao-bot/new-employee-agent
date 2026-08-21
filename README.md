@@ -4,7 +4,7 @@
 
 > 演示账号：用人经理 **王璐** · 新员工 **陈晨**（软件产品设计师 / 上海产品研发部 / Atlas）
 
-**在线浏览：** [打开预览页](https://skylar-shao-bot.github.io/AccessFlow/) · [直接进入工作台](https://skylar-shao-bot.github.io/AccessFlow/app/#/?demo=chenchen)
+**在线浏览：** [打开预览页](https://skylar-shao-bot.github.io/new-employee-agent/) · [直接进入工作台](https://skylar-shao-bot.github.io/new-employee-agent/app/#/?demo=chenchen)
 
 ## 本地预览
 
